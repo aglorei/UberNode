@@ -1,0 +1,23 @@
+{
+  "name": "UberNode",
+  "version": "0.0.1",
+  "description": "Demo for three-legged OAuth 2.0 flow in Node.js",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "OAuthentication",
+    "2.0",
+    "Uber"
+  ],
+  "author": "Tienlong Pham AGLOREI",
+  "license": "MIT",
+  "dependencies": {
+    "ejs": "^2.3.1",
+    "express": "^4.12.4",
+    "express-session": "^1.11.2",
+    "passport": "^0.2.2",
+    "passport-uber": "0.0.1"
+  }
+}
