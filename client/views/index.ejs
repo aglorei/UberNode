@@ -6,9 +6,27 @@
 </head>
 <body>
 	<h2>Uber App</h2>
-	<p>You are now authenticated within Uber.</p>
+	<h4>You are now authenticated within Uber.</h4>
+	<div id="location"></div>
+	<h4>Sample Endpoints:</h4>
 	<p><a href="/profile">Profile</a></p>
 	<p><a href="/history">History</a></p>
 	<p><a href="/logout">Logout</a></p>
+
+	<script type="text/javascript">
+
+	var locationTag = document.getElementById("location");
+
+	if (navigator.geolocation) {
+		navigator.geolocation.getCurrentPosition(showPosition);
+	} else {
+		locationTag.innerHTML = "Geolocation is not supported by this browser.";
+	}
+
+	function showPosition(position) {
+		locationTag.innerHTML = "<p>Latitude: <strong>" + position.coords.latitude.toFixed(4) + "</strong>, Longitude: <strong>" + position.coords.longitude.toFixed(4) + "</strong><p>(figure out how to send these coordinates back to the server in order to make ride requests!)</p>";
+	}
+
+	</script>
 </body>
 </html>

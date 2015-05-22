@@ -119,7 +119,6 @@ function httpsRequest(httpsMethod, host, path, accessToken, actionCallback) {
 		var data = '';
 		sendResponse.setEncoding('utf8');
 		sendResponse.on('data', function (chunk) {
-			console.log(chunk);
 			data += chunk;
 		});
 		sendResponse.on('end', function () {
