@@ -2,7 +2,7 @@ var express = require('express');
 var session = require('express-session');
 var passport = require('passport');
 var uberStrategy = require('passport-uber');
-var https = require('https');
+var request = require('request');
 var app = express();
 
 // environment variables: do not share, store, or commit the actual values!
@@ -55,12 +55,18 @@ passport.use(new uberStrategy({
 	}
 ));
 
+// landing page for unauthorized users
 app.get('/login', function (request, response) {
 	response.render('login');
 });
 
 // use passport.authenticate() as route middleware to authenticate the request by first redirecting to Uber
-app.get('/auth/uber', passport.authenticate('uber'));
+app.get('/auth/uber',
+	passport.authenticate('uber',
+		{ scope: ['profile', 'history', 'history_lite', 'request', 'request_receipt']
+		}
+	)
+);
 
 // if authentication fails, redirect home. otherwise, direct to app.get '/login'
 app.get('/auth/uber/callback',
@@ -77,7 +83,7 @@ app.get('/', ensureAuthenticated, function (request, response) {
 
 // profile request (example of secure API call for endpoint)
 app.get('/profile', ensureAuthenticated, function (request, response) {
-	httpsRequest('GET', 'api.uber.com', '/v1/me', request.user.accessToken, function (error, res) {
+	getRequest('https://api.uber.com/v1/me', request.user.accessToken, function (error, res) {
 		if (error) { console.log(error); }
 		response.json(JSON.parse(res));
 	});
@@ -85,9 +91,26 @@ app.get('/profile', ensureAuthenticated, function (request, response) {
 
 // history request (example of secure API call for endpoint)
 app.get('/history', ensureAuthenticated, function (request, response) {
-	httpsRequest('GET', 'api.uber.com', '/v1.2/history', request.user.accessToken, function (error, res) {
+	getRequest('https://api.uber.com/v1.2/history', request.user.accessToken, function (error, res) {
 		if (error) { console.log(error); }
 		response.json(JSON.parse(res));
+	});
+});
+
+// ride request (example of secure API call for endpoint)
+app.get('/request', ensureAuthenticated, function (request, response) {
+	// NOTE! Keep in mind that, although this link is a GET request, the actual ride request must be a POST, as shown below
+	var parameters = {
+		start_latitude : "37.334381",
+		start_longitude: "-121.89432",
+		end_latitude: "37.77703",
+		end_longitude: "-122.419571",
+		product_id: "a1111c8c-c720-46c3-8534-2fcdd730040d"
+	};
+
+	postRequest('https://sandbox-api.uber.com/v1/requests', request.user.accessToken, parameters, function (error, res) {
+		if (error) { console.log(error); }
+		response.json(res);
 	});
 });
 
@@ -105,30 +128,40 @@ function ensureAuthenticated (request, response, next) {
 	response.redirect('/login');
 }
 
-// Use this function in order to send https requests with correct authorization using the accessToken. Keep in mind that any routes using this function should use ensureAuthenticated first
-function httpsRequest(httpsMethod, host, path, accessToken, actionCallback) {
-	var sendRequest = https.request({
-		method: httpsMethod,
-		hostname: host,
-		path: path,
+// Use this function in order to send https GET requests with correct authorization using the accessToken. Keep in mind that any routes using this function should use ensureAuthenticated first. On the callback function, we also use JSON.parse() since the body payload is a string
+function getRequest(endpointURL, accessToken, actionCallback) {
+	var sendRequest = request.get({
+		url: endpointURL,
 		headers: {
 			Authorization: 'Bearer ' + accessToken
 		}
 	},
-	function (sendResponse){
-		var data = '';
-		sendResponse.setEncoding('utf8');
-		sendResponse.on('data', function (chunk) {
-			data += chunk;
-		});
-		sendResponse.on('end', function () {
-			actionCallback(null, data);
-		});
+	function (error, response, body){
+		if (error) {
+			actionCallback('error from endpoint GET ' + endpointURL + ' => ' + error);
+		} else {
+			actionCallback(null, body);
+		}
 	});
-	sendRequest.on('error', function (error) {
-		actionCallback(httpsMethod + ' ' + 'https://' + host + path + ' ERROR => ' + error);
+}
+
+// Use this function in order to send https POST requests with parameters in JSON format and correct authorization using the accessToken. Keep in mind that any routes using this function should use ensureAuthenticated first. The callback function does not requres JSON.parse() since the body payload is JSON
+function postRequest(endpointURL, accessToken, parameters, actionCallback) {
+	var sendRequest = request.post({
+		url: endpointURL,
+		headers: {
+			Authorization: 'Bearer ' + accessToken,
+			'Content-Type': 'application/json'
+		},
+		json: parameters
+	},
+	function (error, response, body){
+		if (error) {
+			actionCallback('error from endpoint POST ' + endpointURL + ' => ' + error);
+		} else {
+			actionCallback(null, body);
+		}
 	});
-	sendRequest.end();
 }
 
 // set port and start server

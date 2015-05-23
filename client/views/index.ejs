@@ -7,10 +7,12 @@
 <body>
 	<h2>Uber App</h2>
 	<h4>You are now authenticated within Uber.</h4>
-	<div id="location"></div>
 	<h4>Sample Endpoints:</h4>
 	<p><a href="/profile">Profile</a></p>
 	<p><a href="/history">History</a></p>
+	<div id="location">
+		<p>Loading geolocation...</p>
+	</div>
 	<p><a href="/logout">Logout</a></p>
 
 	<script type="text/javascript">
@@ -24,7 +26,10 @@
 	}
 
 	function showPosition(position) {
-		locationTag.innerHTML = "<p>Latitude: <strong>" + position.coords.latitude.toFixed(4) + "</strong>, Longitude: <strong>" + position.coords.longitude.toFixed(4) + "</strong><p>(figure out how to send these coordinates back to the server in order to make ride requests!)</p>";
+		locationTag.innerHTML = "<p>Latitude: <strong>" + position.coords.latitude.toFixed(5) + "</strong>, Longitude: <strong>" + position.coords.longitude.toFixed(5) + "</strong>";
+		locationTag.innerHTML += "<p>Figure out how to send these coordinates back to the server in order to make ride requests!</p>" ;
+		locationTag.innerHTML += "<p>For now, we will use this curl example: </p>";
+		locationTag.innerHTML += "<p><a href='/request'>Request a ride</a></p>";
 	}
 
 	</script>
